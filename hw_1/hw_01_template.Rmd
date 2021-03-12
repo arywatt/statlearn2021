@@ -1,0 +1,35 @@
+---
+title: "Statlearn HW_1"
+author: "xxx; yyyyy; zzzzz; hhhhhh; vvvvvv"
+date: "15/03/2021"
+output: html_document
+header-includes :
+- \usepackage { amsmath }
+---
+
+
+# SL - Homework 1
+
+### Libraries 
+
+```{r}
+# Here we include all libraires needed to run 
+library('caret')
+
+```
+
+
+## Excercise 1
+```{r}
+
+```
+
+
+## Excercise 2
+```{r}
+
+```
+
+
+
+

@@ -15,20 +15,173 @@ header-includes :
 ```{r}
 # Here we include all libraires needed to run 
 library('caret')
+library('viridis')
 
 ```
 
 
 ## Excercise 1
+
+Polynomial regression is one example of regression analysis using basis functions to model a functional relationship between two quantities. More specifically, it replaces {\displaystyle x\in \mathbb {R} ^{d_{x}}}{\displaystyle x\in \mathbb {R} ^{d_{x}}} in linear regression with polynomial basis {\displaystyle \varphi (x)\in \mathbb {R} ^{d_{\varphi }}}{\displaystyle \varphi (x)\in \mathbb {R} ^{d_{\varphi }}}, e.g. {\displaystyle [1,x]{\mathbin {\stackrel {\varphi }{\rightarrow }}}[1,x,x^{2},\ldots ,x^{d}]}{\displaystyle [1,x]{\mathbin {\stackrel {\varphi }{\rightarrow }}}[1,x,x^{2},\ldots ,x^{d}]}. A drawback of polynomial bases is that the basis functions are "non-local", meaning that the fitted value of y at a given value x = x0 depends strongly on data values with x far from x0.[5] In modern statistics, polynomial basis-functions are used along with new basis functions, such as splines, radial basis functions, and wavelets. These families of basis functions offer a more parsimonious fit for many types of data.
+
+
+
+```{r}
+ff <- function(x,j){
+  f= exp(j*x)
+  if (j!=0){
+    f = (j%%2 ==0)* exp(2*j*x) + (j%%2 !=0)*exp(-2*j*x)
+  }
+return(f)
+}
+```
+
+
+```{r}
+# Lets define our cosine functions 
+# Cosine-basis
+cos.basis = function(x, j = 4)  1*(j == 0) + sqrt(2)*cos(pi*j*x)*(j > 0)
+
+
+# Plot the first 10 basis functions
+j.max = 6
+mycol = viridis(j.max + 1, alpha = .5)
+
+
+# Open the graphical device
+curve(cos.basis(x,0), n = 501,  ylim = c(-2,2), col = mycol[1], lwd = 3,
+      main = " ", xlab = "", ylab = expression(phi[j](x)))
+
+
+# Add the other basis functions
+for (idx in 1:j.max) curve(cos.basis(x, j = idx), n = 501, add = T, col = mycol[idx + 1], lwd = 3)
+legend("bottom", paste("j =", 0:j.max), col = mycol, lwd = 4, cex = .7, bty = "n", horiz = T)
+
+
+```
+# lets compute the doppler funtion and estimate coefficients 
+
 ```{r}
 
+# Doppler function scaled in [0,1]
+doppler.fun <-  function(x) sqrt(x*(1 - x))*sin( (2.1*pi)/(x + 0.05) )
+curve(doppler.fun(x), from = 0, to = 1, main = "", xlab = "", ylab = "m(x)",
+      n = 1001, col = gray(.8), lwd = 3)
+
+# Part 3 ------------------------------------------------------------------
+
+# Let's now numerically evaluate the Fourier coefficients 
+# of the Doppler under our cosine-basis
+j.max   <- 200
+f.coeff <- rep(NA, j.max+1)
+for (idx in 0:j.max){
+  foo = tryCatch(
+    integrate(function(x, j) doppler.fun(x) * cos.basis(x,j), lower = 0, upper = 1, j = idx)$value,
+    error = function(e) NA
+  )
+  f.coeff[idx + 1] = foo
+}
+# Visualize the Fourier coefficients
+plot(f.coeff, type = "h", ylab = expression(beta[j]), main = "", xlab = "")
+
+
+```
+```{r}
+#Now we order the coefficients in descending order w.r.t to their absolute value
+ord = order(abs(f.coeff), decreasing = T) # indexes from max to  min abslute value
+
+# Visualize the Fourier coefficients
+nf.coeff = f.coeff[ord]
+plot(nf.coeff, type = "h", ylab = expression(beta[j]), main = "", xlab = "")
+```
+
+
+## Rebuild the appromating function 
+
+```{r}
+# Time to rebuild/approximate our Doppler with an n-term (linear) approximation.
+# Let's make a function for this purpose...
+
+# Linear approximation
+proj.cos <- function(x, f.coeff, j.max = 10){
+  out = rep(0, length(x))
+  for(idx in 0:j.max){
+    if ( !is.na(f.coeff[idx + 1]) ) out = out + f.coeff[idx + 1] * cos.basis(x, j = idx)
+  }
+  return(out)
+}
+
+# Non linear approximation
+proj.cos.nl <- function(x, f.coeff, j.max = 10){
+  out = rep(0, length(x))
+  for(idx in 0:j.max){
+    ord.id = ord[idx + 1] # We retrieve the index of the greatest (idx+1)-th greatest coefficient in absolute value
+    if ( !is.na(f.coeff[ord.id]) ) {
+      out = out +   f.coeff[ord.id] * cos.basis(x, j = ord.id -1) # apply the basis function retrieving coeff at right index
+    }
+  }
+  return(out)
+}
+
+```
+
+# Visualize approximations
+
+```{r}
+# Visualize some n-terms approximations
+j.seq =  c(5, 10, 25, 50, 100, 150)
+mycol = viridis(length(j.seq), alpha = .7)
+
+par(mfrow = c(3,2)) # split the graphical device in a 2 x 3 matrix
+for (idx in 1:length(j.seq)){
+  # Original function
+  curve(doppler.fun(x), from = 0, to = 1, 
+        main = paste(j.seq[idx], "-term  Linear approximation", sep = ""),
+        xlab = "", ylab = expression(m[J](x)),
+        n = 1001, col = gray(.8), lwd = 3)
+  # Add approximation
+  curve(proj.cos(x, f.coeff = f.coeff, j.seq[idx]),
+        n = 1001, col = mycol[idx], lwd = 4,
+        add = TRUE)
+  
+   curve(doppler.fun(x), from = 0, to = 1, 
+        main = paste(j.seq[idx], "-term  Non linear approximation", sep = ""),
+        xlab = "", ylab = expression(m[J](x)),
+        n = 1001, col = gray(.8), lwd = 3)
+   
+  curve(proj.cos.nl(x, f.coeff = f.coeff, j.seq[idx]),
+        n = 1001, col = mycol[idx], lwd = 4,
+        add = T)
+}
+par(mfrow = c(1,3)) # back to default
+
+
+
+
+```
+# Computer error 
+
+```{r}
+# mse <- function(mx,mjx){
+#   
+#   j.max   <- 200
+#   f.coeff <- rep(NA, j.max+1)
+#   for (idx in 0:j.max){
+#     foo = tryCatch(
+#       integrate(function(x, j) (mx(x) - mjx(x)) , lower = 0, upper = 1)$value,
+#       error = function(e) 0
+#     )
+#     foo =  sqrt(foo)
+#   }
+#   return(foo)
+# }
+# 
+# mse(doppler.fun, proj.cos)
 ```
 
 
 ## Excercise 2
-```{r}
 
-```
 
 
 

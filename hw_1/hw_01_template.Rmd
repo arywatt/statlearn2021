@@ -125,11 +125,27 @@ proj.cos.nl <- function(x, f.coeff, j.max = 10){
 
 ```
 
+# Compute errors of approximations
+
+```{r}
+mse <- function(mx,mjx, n_terms){
+  er = NA
+  fo=tryCatch(
+    integrate(function(x,j) (mx(x)- mjx(x, f.coeff,n_terms))^2, lower = 0, upper = 1)$value, error = function(e) NA )
+    er = sqrt(fo)
+  return (er)
+}
+
+
+```
+
+
+
 # Visualize approximations
 
 ```{r}
 # Visualize some n-terms approximations
-j.seq =  c(5, 10, 25, 50, 100, 150)
+j.seq =  c(5, 50, 150)
 mycol = viridis(length(j.seq), alpha = .7)
 
 par(mfrow = c(3,2)) # split the graphical device in a 2 x 3 matrix
@@ -137,7 +153,8 @@ for (idx in 1:length(j.seq)){
   # Original function
   curve(doppler.fun(x), from = 0, to = 1, 
         main = paste(j.seq[idx], "-term  Linear approximation", sep = ""),
-        xlab = "", ylab = expression(m[J](x)),
+        xlab = paste('error ', mse(doppler.fun, proj.cos,j.seq[idx])), 
+                     ylab = expression(m[J](x)),
         n = 1001, col = gray(.8), lwd = 3)
   # Add approximation
   curve(proj.cos(x, f.coeff = f.coeff, j.seq[idx]),
@@ -146,7 +163,8 @@ for (idx in 1:length(j.seq)){
   
    curve(doppler.fun(x), from = 0, to = 1, 
         main = paste(j.seq[idx], "-term  Non linear approximation", sep = ""),
-        xlab = "", ylab = expression(m[J](x)),
+        xlab = paste('error ', mse(doppler.fun, proj.cos.nl,j.seq[idx]))
+        , ylab = expression(m[J](x)),
         n = 1001, col = gray(.8), lwd = 3)
    
   curve(proj.cos.nl(x, f.coeff = f.coeff, j.seq[idx]),
@@ -159,28 +177,29 @@ par(mfrow = c(1,3)) # back to default
 
 
 ```
-# Computer error 
 
-```{r}
-# mse <- function(mx,mjx){
-#   
-#   j.max   <- 200
-#   f.coeff <- rep(NA, j.max+1)
-#   for (idx in 0:j.max){
-#     foo = tryCatch(
-#       integrate(function(x, j) (mx(x) - mjx(x)) , lower = 0, upper = 1)$value,
-#       error = function(e) 0
-#     )
-#     foo =  sqrt(foo)
-#   }
-#   return(foo)
-# }
-# 
-# mse(doppler.fun, proj.cos)
-```
+
+
 
 
 ## Excercise 2
+
+```{r}
+k = 3
+d = 3
+values = matrix(NA,nrow= k , ncol = k+ d+1)
+supporto = quantile((0:1), probs = seq(0,1,length.out = k))
+numcol = k+d+1
+
+for(i in 1:numcol){
+  values[,i] = (i <= d+1)* supporto^(i-1) + (i > d+1)*(supporto - supporto[max(1,(i-d-1))])^d
+}
+
+values[values<0] = 0
+
+values
+supporto
+```
 
 
 

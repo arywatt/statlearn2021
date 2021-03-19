@@ -138,3 +138,42 @@ fit_10_3$coefficients  ## na coefficients are the 1st (all ones) one the fifth o
 summary(fit_10_3)
 
 
+#### Mallow's CP
+##defining the MSE function
+MSE_tr=function(residuals){
+  mse=1/length(residuals)*(sum((residuals)^2))
+  return(mse)
+  }
+
+MSE_tr(fit_3_3$residuals)
+
+##Mallows's cp estimation
+Cp=function(ps, residuals){ #ps=tot # of parameters
+  n=length(residuals)
+  MSE.tr=MSE_tr(residuals)
+  hatsigma2 <- ( n*MSE.tr ) / (n - ps)
+  Cps <- MSE.tr + (2 * hatsigma2 * ps) / n
+  return(Cps)
+}
+
+##q=3 d=3 model
+cp_3_3=Cp(8, fit_3_3$residuals)
+
+
+##q=5 d=3 model
+cp_5_3=Cp(10, fit_5_3$residuals)
+
+
+##q=10 d=3 model
+cp_10_3=Cp(15, fit_10_3$residuals)
+
+which.min(c(cp_3_3, cp_5_3, cp_10_3)) ##the best model according to the evaluation of its mallow's cp is the one with 10 knots
+
+##generalized cross validation  
+###wiki-if we fit the model and compute the MSE on the training set, we will get an optimistically biased assessment of how well the model will fit an independent data set. This biased estimate is called the in-sample estimate of the fit, whereas the cross-validation estimate is an out-of-sample estimate. 
+MSEs.tr=c(MSE_tr(fit_3_3$residuals), MSE_tr(fit_5_3$residuals), MSE_tr(fit_10_3$residuals))
+
+ps=c(length(fit_3_3$coefficients), length(fit_5_3$coefficients), length(fit_10_3$coefficients))                                      
+GCV= MSEs.tr / (1 - (ps)/n )^2
+
+plot(c(3,5,10), GCV, type = "b", xlab = "q")

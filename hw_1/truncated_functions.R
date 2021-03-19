@@ -51,7 +51,7 @@ plot_trunc_tog=function(q,d,from, to){
 
 ##1st combination of d=1, q=3
 plot_power(1)
-plot_trunc_tog(3,1, -1, 2)
+plot_trunc_tog(3,1, from = -1, to=2)
 
 
 
@@ -93,12 +93,48 @@ X=matrix(NA, nrow = nrow(df), ncol = q+d+1)
 #the generic entry of the design matrix X in i,j is the value of the jth fnc computed for the ith unit of the observations vector x, X[i, j] = gj(xi)
 
 
-#genero d+q+1 colonne all'interno delle quali applico la stessa funzione per ogni elemento
+obs=df$x
+knots=function(q){return(quantile(obs,probs = seq(0,1,length.out = q)))}
+#This matrix is of order w x (k+d+1).
+#We want to study this matrix for 3 different values of w, i.e. (3,5,10) with 
+#poly degree d fixed at d=3
 
-c1=matrix(NA, n, 1)
-for (i in 1:n) {
-  c1[i]=g_b(x[i], d)
+design=function(q,d){
+  
+  values = matrix(NA,nrow= length(obs) , ncol =q+d+1)
+  knots=knots(q)
+  numcol = q+d+1
+  
+  for(j in 1:numcol){
+    knot=ifelse(j<= d+1, 0, knots[j-d-1])
+    values[,j] = (j <=d+1 )* obs^(j-1) + (j >d+1 )*(obs - knot)^3
+    values=ifelse(values>0,values,0)
+  }
+  return(values)
 }
 
+X_3_3=cbind(design(3,3), df$y.yesterday)
+
+
+X_3_3=as.data.frame(X_3_3)
+fit_3_3=lm(V8 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7, data=X_3_3) 
+fit_3_3$coefficients  ##na coefficients are the 1st one the 5th one and the 7th one
+summary(fit_3_3)
+
+
+
+X_5_3=cbind(design(5,3), df$y.yesterday)
+X_5_3=as.data.frame(X_5_3)
+fit_5_3=lm(V10 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9, data=X_5_3)
+fit_5_3$coefficients  ## na coefficients are the 1st (all ones) one the fifth one and the last one (all zero)
+summary(fit_5_3)
+
+head(design(10,3))
+
+X_10_3=cbind(design(10,3), df$y.yesterday)
+X_10_3=as.data.frame(X_10_3)
+fit_10_3=lm(V15 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9+ V10 + V11+ V12+ V13+ V14, data=X_10_3)
+fit_10_3$coefficients  ## na coefficients are the 1st (all ones) one the fifth one and the last one (all zero)
+summary(fit_10_3)
 
 

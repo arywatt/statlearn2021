@@ -183,7 +183,11 @@ par(mfrow = c(1,3)) # back to default
 
 
 ## Excercise 2
+A spline of order d is a piecewise polynomial function which guarantees the continuity of the derivatives up to order d-1 in the breakpoints. These breakpoints are also known as knots and their presence allows the construction of a quite flexible function. In order to generate a spline we need a family of functions $\mathscr{G}$, which contains power and truncated power functions and which functional form varies according to the number of knots $q$, and the degree of the spline, $d$. Given $\mathscr{G}$, we can define a spline $f$ as the finite linear combination of the functions contained in $\mathscr{G}$: $$f(x)=\sum^{(d+1)+q}_{j=1} \beta_j g_j(x)$$
 
+This functional form reminds us of the orthogonal series expansion
+$$m(x) = \sum^{\infty}_{j=1} \beta_j \phi_j(x)$$
+The main technical difference between these two approaches is that for the construction of a spline we do not require an orthonormal basis; whereas for the orthogonal series expansion we have additional restrictions which ensure convergence of the Fourier series to the target function $m(x)$.  
 ```{r}
 
 ##used in order to generate those functions such that gi(x)=x^i-1 (the blue functions)

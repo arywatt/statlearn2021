@@ -407,16 +407,24 @@ plot(c(3,5,10), KCV, type = "b", log = "y", xlab = "q")
 
 
 
+
 ```{r 2.4 comparison}
-pol5_fit=lm(y.yesterday ~ poly(x, degree = 5), df) #best polinomial
+pol3_fit=lm(y.yesterday ~ poly(x, degree = 3), df)
 
 #comparison
-AIC(fit_10_3, pol5_fit)
-###even if the spline has more parameters, 13, than the polinomial, the AIC suggest the usage of the spline as it minimizes the loss value
+AIC(fit_5_3, pol3_fit)
+###even if the spline has more parameters, 10, than the polinomial, the AIC suggest the usage of the spline as it minimizes the loss value
 
-cp_pol5=Cp(ps=length(pol5_fit$coefficients), residuals=pol5_fit$residuals)
+cp_pol3=Cp(ps=length(pol3_fit$coefficients), residuals=pol3_fit$residuals)
 
-which.min(c(cp_10_3, cp_pol5))
+which.min(c(cp_5_3, cp_pol3))
 
-#For Linear Models: Cp and AIC are proportional: the lowest Cp corresponds to the lowest AIC. AIC attests what we already know from Cp value, the best model between the two is the spline.
+
+summary(fit_5_3)  ##Adjusted R-squared:  0.8105
+
+summary(pol3_fit) ##Adjusted R-squared:  0.597
 ```
+We are now interested in comparing two different linear models for our data: the polynomial of degree 3 and the best cubic spline among the aforementioned ones: i.e. the spline with 5 knots. The first difference resides in the structural properties of these models: although they are both cubic polynomials, the spline includes a higher number of parameters, 10, while the polynomial has 6. The usage of the spline allows to increase the flexibility of the linear model without the need for polynomials of higher order. In fact the flexibility increases just by adding more knots to the spline. In order to compare the fit of the two models to the data while still taking into account the complexity of the model, we can employ the adjusted $R^2$ statistic. In fact $R^2_{adj}$ measures the percentage of the variance explained by the model while penalizing models with a higher number of parameters. According to the estimation of this value the spline is able to capture 81\% of the variability, 21.3\% more than the polynomial. This result attests that the spline model yields better results, even if it employs a higher number of parameters. //
+Other statistics that can be employed to make a model comparison are the Akaike Information Criteria and the Mallows' Cp, for linear models these quantities are proportional and compute a loss function that needs to be minimized. By calculating these quantities for our models we have further confirmation that the spline yields better results.   
+
+

@@ -196,7 +196,7 @@ g_b=function(x,d){
 plot_power = function(d){
   par(mfrow=c(1,1))
   curve(g_b(x,1), main="power functions", from = -2, to=2, ylim=c(-0.5, 10), col="darksalmon")
-  for (i in 2:d) {
+  for (i in 2:(d+1)) {
     curve(g_b(x,i), add=T, col=i)
   }
 }
@@ -289,47 +289,134 @@ for (i in 2:4 ) {
 load(file = 'resources/ieri_domani.Rdata')
 ```
 
-```{r}
-
-d=3
-q=3 #5,10
+```{r design matrix}
 obs=df$x
-knots= quantile((0:1), probs = seq(0,1,length.out=q))
-n=length(obs)
-X=matrix(NA, nrow = nrow(df), ncol = q+d+1)
-
 #the generic entry of the design matrix X in i,j is the value of the jth fnc computed for the ith unit of the observations vector x, X[i, j] = gj(xi)
+#We want to study this matrix for 3 different values of q, i.e. (3,5,10) with 
+#poly degree d fixed at d=3
 
 
-#genero d+q+1 colonne all'interno delle quali applico la stessa funzione per ogni elemento
+knots=function(q){return(quantile(obs,probs = seq(0,1,length.out = q)))}
 
-# c1=matrix(NA, n, 1)
-# for (i in 1:n) {
-#   c1[i]=g_b(x[i], d)
-# }
-
-
-```
-
-
-```{r}
-k = 3
-d = 3
-values = matrix(NA,nrow= k , ncol = k+ d+1)
-supporto = quantile((0:1), probs = seq(0,1,length.out = k))
-numcol = k+d+1
-
-for(i in 1:numcol){
-  values[,i] = (i <= d+1)* supporto^(i-1) + (i > d+1)*(supporto - supporto[max(1,(i-d-1))])^d
+design=function(q,d){
+  
+  values = matrix(NA,nrow= length(obs) , ncol =q+d+1)
+  knots=knots(q)
+  numcol = q+d+1
+  
+  for(j in 1:numcol){
+    knot=ifelse(j<= d+1, 0, knots[j-d-1])
+    values[,j] = (j <=d+1 )* obs^(j-1) + (j >d+1 )*(obs - knot)^3
+    values=ifelse(values>0,values,0)
+  }
+  return(values)
 }
 
-values[values<0] = 0
+```
 
-values
-supporto
+```{r spline regression}
+
+X_3_3=cbind(design(3,3), df$y.yesterday) 
+
+X_3_3=as.data.frame(X_3_3)
+#linear regression on the design matrix
+fit_3_3=lm(V8 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7, data=X_3_3) 
+fit_3_3$coefficients  ##na coefficients are the 1st one the 5th one and the 7th one
+summary(fit_3_3)
+
+
+
+X_5_3=cbind(design(5,3), df$y.yesterday)
+X_5_3=as.data.frame(X_5_3)
+fit_5_3=lm(V10 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9, data=X_5_3)
+fit_5_3$coefficients  ## na coefficients are the 1st (all ones) one the fifth one and the last one (all zero)
+summary(fit_5_3)
+
+head(design(10,3))
+
+X_10_3=cbind(design(10,3), df$y.yesterday)
+X_10_3=as.data.frame(X_10_3)
+fit_10_3=lm(V15 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9+ V10 + V11+ V12+ V13+ V14, data=X_10_3)
+fit_10_3$coefficients  ## na coefficients are the 1st (all ones) one the fifth one and the last one (all zero)
+summary(fit_10_3)
 ```
 
 
 
+```{r cp & cv}
+#### Mallow's CP
+##defining the MSE function
+MSE_tr=function(residuals){
+  mse=1/length(residuals)*(sum((residuals)^2))
+  return(mse)
+  }
+
+MSE_tr(fit_3_3$residuals)
+
+##Mallows' cp estimation
+#given the tot # of parameters ps and the residuals of a fitted model, returns the Mallows' Cp value
+Cp=function(ps, residuals){ 
+  n=length(residuals)
+  MSE.tr=MSE_tr(residuals)
+  hatsigma2 <- ( n*MSE.tr ) / (n - ps)
+  Cps <- MSE.tr + (2 * hatsigma2 * ps) / n
+  return(Cps)
+}
+
+##q=3 d=3 model
+cp_3_3=Cp(8, fit_3_3$residuals)
 
 
+##q=5 d=3 model
+cp_5_3=Cp(10, fit_5_3$residuals)
+
+
+##q=10 d=3 model
+cp_10_3=Cp(15, fit_10_3$residuals)
+
+which.min(c(cp_3_3, cp_5_3, cp_10_3)) ##the best model according to the evaluation of its mallows' cp is the one with 10 knots
+
+##generalized cross validation  
+
+ps=c(length(fit_3_3$coefficients), length(fit_5_3$coefficients), length(fit_10_3$coefficients))                                      
+GCV= MSEs.tr / (1 - (ps)/n )^2
+
+plot(c(3,5,10), GCV, type = "b", xlab = "q")
+
+###k fold cross validation
+K = 5
+set.seed(123) # reproducibility
+require(boot) # load the package
+
+##five fold cross validation for the model d=3 q=3
+KCV_3_3 = cv.glm(X_3_3, glm(V8 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7, X_3_3, family =gaussian), K = K )$delta[1]
+
+
+##five fold cross validation for the model d=3 q=5
+KCV_5_3 = cv.glm(X_5_3, glm(V10 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9, X_5_3, family =gaussian), K = K )$delta[1]
+
+
+
+##five fold cross validation for the model d=3 q=10
+KCV_10_3 = cv.glm(X_10_3, glm(V15 ~ V1+ V2+ V3 + V4 + V5 + V6 + V7 + V8 + V9+ V10 + V11+ V12+ V13+ V14, X_10_3, family =gaussian), K = K )$delta[1]
+
+
+KCV=c(KCV_3_3, KCV_5_3, KCV_10_3)
+plot(c(3,5,10), KCV, type = "b", log = "y", xlab = "q")
+```
+
+
+
+```{r 2.4 comparison}
+pol5_fit=lm(y.yesterday ~ poly(x, degree = 5), df) #best polinomial
+
+#comparison
+AIC(fit_10_3, pol5_fit)
+###even if the spline has more parameters, 13, than the polinomial, the AIC suggest the usage of the spline as it minimizes the loss value
+
+cp_pol5=Cp(ps=length(pol5_fit$coefficients), residuals=pol5_fit$residuals)
+
+which.min(c(cp_10_3, cp_pol5))
+
+#For Linear Models: Cp and AIC are proportional: the lowest Cp corresponds to the lowest AIC. AIC attests what we already know from Cp value, the best model between the two is the spline.
+```

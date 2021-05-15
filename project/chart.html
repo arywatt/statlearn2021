@@ -1,0 +1,66 @@
+<html>
+<head>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['gantt']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Task ID');
+      data.addColumn('string', 'Task Name');
+      data.addColumn('string', 'Resource');
+      data.addColumn('date', 'Start Date');
+      data.addColumn('date', 'End Date');
+      data.addColumn('number', 'Duration');
+      data.addColumn('number', 'Percent Complete');
+      data.addColumn('string', 'Dependencies');
+
+data.addRows([
+        ['research', 'Research', 'research',
+         new Date('2021-04-06'), new Date('2021-04-30'), null, 10, null],
+         
+           ['gathering', 'Data gathering', 'research',
+         new Date('2021-04-06'), new Date('2021-04-16'), null, 10, null],
+         
+        ['data', 'Data processing', 'processing',
+         new Date('2021-04-16'), new Date('2021-04-20'), null, 4, 'gathering'],
+         
+          ['features', 'Features engeneering', 'data',
+         new Date('2021-04-21'), new Date('2021-04-31'), null, 10, 'data'],
+       
+         ['modeling', 'Modelling', 'features',
+         new Date('2021-05-01'), new Date('2021-05-21'), null, 21, 'features'],
+         
+        
+           ['evaluation', 'Performance evaluation', 'modeling',
+         new Date('2021-05-21'), new Date('2021-05-30'), null, 10, 'modeling'],
+         
+          ['report', 'Report', 'Report ',
+         new Date('2021-05-16'), new Date('2021-06-05'), null, 21, 'modeling'],
+       
+       
+
+         
+
+      ]);
+
+      var options = {
+        height: 500,
+        gantt: {
+          trackHeight: 30
+        }
+      };
+
+      var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
+
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+<body>
+  <div><h2>StatLearn Project : Groupe 20</h2> </div>
+  <div id="chart_div"></div>
+</body>
+</html>

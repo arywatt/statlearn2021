@@ -1,0 +1,146 @@
+---
+title: "Statistical Learning Project"
+author: " Groupe 20 -  Alessandro Maglie; Chiara Caminiti; Gabriella Jellyman; ; Frank Massoda ; Yao Wateba Appeti"
+
+
+date: "02/04/2021"
+output:
+  html_document:
+    df_print: paged
+urlcolor: magenta
+linkcolor: cyan
+geometry: margin=1.25cm
+fontsize: 12pt
+header-includes:
+- \usepackage{bbold}
+- \usepackage{mdframed, xcolor}
+- \usepackage{graphicx}
+- \mdfsetup{frametitlealignment=\center}
+- \usepackage{multirow}
+- \definecolor{shadecolor}{rgb}{0.89,0.8,1}
+- \newcommand{\Prob}{\mathbb{P}}
+- \newcommand{\Exp}{\mathbb{E}}
+- \newcommand{\Var}{\mathbb{V}\mathrm{ar}}
+- \newcommand{\Cov}{\mathbb{C}\mathrm{ov}}
+- \newcommand{\blue}{\textcolor{blue}}
+- \newcommand{\darkgreen}{\textcolor[rgb]{0,.5,0}}
+- \newcommand{\gray}{\textcolor[rgb]{.3,.3,.3}}
+- \newcommand{\blueA}{\textcolor[rgb]{0,.1,.4}}
+- \newcommand{\blueB}{\textcolor[rgb]{0,.3,.6}}
+- \newcommand{\blueC}{\textcolor[rgb]{0,.5,.8}}
+- \newcommand{\evidenzia}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\nero}{\textcolor[rgb]{0,0,0}}
+- \newcommand{\darkyel}{\textcolor[rgb]{.4,.4,0}}
+- \newcommand{\darkred}{\textcolor[rgb]{.6,0,0}}
+- \newcommand{\blueDek}{\textcolor[rgb]{0.6000000, 0.7490196, 0.9019608}}
+- \newcommand{\purpLarry}{\textcolor[rgb]{0.6901961, 0.2431373, 0.4784314}}
+- \newcommand{\lightgray}{\textcolor[rgb]{.8,.8,.8}}
+- \newcommand{\bfun}{\left\{\begin{array}{ll}}
+- \newcommand{\efun}{\end{array}\right.}
+---
+
+
+Research Title
+----------
+ Language detection by audio analysis 
+
+----------
+
+Abstract
+----------
+
+
+This project intends to evaluate differences between languages by analyzing various samples of human speech in different languages. We will try to extract from each audio sample 
+relevant features that will help understand differences between those languages which a view to detecting the language spoken from an audio sample.
+
+----------
+
+
+Main research aim \& framework
+----------
+  The main goal is to perform a language detection from an audio sample and also to characterize each language by trying to explain its underlying structure. 
+At first we thought about  doing a project as close as possible from features offered by Arduino software such as audio analysis, and then to simply to understand more the structure of each language and try to see if there were a substantial difference between them.
+
+
+### Papers and articles 
+  - Article on web[https://medium.com/language-insights/sound-frequencies-of-language-714b97811408]
+  
+  - Factor analyses of critical-band-filtered speech[ https://www.nature.com/articles/srep42468]
+
+----------
+
+IML paper(s) you like (at this point!)
+----------
+
+- Work in progress
+
+
+-------
+
+Data source(s) 
+----------
+We will be using the Voxlingua107 dataset essentialy, which is a dataset of audio speech samples in various languages .
+
+### Datasets 
+ - VoxLingua107[http://bark.phon.ioc.ee/voxlingua107] 
+
+----------
+
+Data collection
+----------
+
+
+We actually are not planning to collect data but for testing purpose, since it would be difficult to gather a sample for all languages to work on. But we could ask friends to provide some samples with a view to testing our models built on the data source specified above.
+
+
+----------
+
+Model \& Methods
+----------
+For now we are planning to use simple methods like 
+
+ - Multiclass Classification
+ - Clustering 
+ - SVM
+ - Tree based methods
+   
+Eventually an neural network based model could be implemented to assess the performance of our IML based method and evaluate how they compare .
+
+Currently we are still searching for a suitable IML analysis technique to use for our project .
+
+----------
+
+Software/Hardware Toolkit
+----------
+
+Our main software will be R with dedicated libraries like:
+
+  - TuneR
+  - Seewave
+  - wraasp
+  - phonTools
+  - audio 
+  - signal
+  - audiolyzR
+
+And others software like MATLAB and associated toolboxes, and scripts in Python and others.
+
+
+----------
+
+Project Timeline
+----------
+![Gantt Diagram](gant-project.png)
+
+----------
+
+
+References
+----------
+
+-Ueda, K. and Nakajima, Y. An acoustic key to eight languages/dialects: Factor analyses of critical-band-filtered speech. Sci. Rep. 7, 42468; doi: 10.1038/srep42468 (2017).
+
+
+
+(To be completed later )
+----------

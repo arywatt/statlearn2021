@@ -39,3 +39,4 @@ vignettes/*.pdf
 .Renviron
 
 hw_1/test.Rmd
+project/data/

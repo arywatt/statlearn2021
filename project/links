@@ -1,19 +1,25 @@
-Wrassp package for speech processing 
+#Wrassp package for speech processing 
 https://cran.r-project.org/web/packages/wrassp/vignettes/wrassp_intro.html
 
-signal processing
+#Signal processing
 https://rpubs.com/eR_ic/dspr
 
 
-
-Interpretable Machine learning 
+#Interpretable Machine learning 
 https://christophm.github.io/interpretable-ml-book/
 
 
-
-IML techniques in R
+#IML techniques in R
 https://www.r-bloggers.com/2018/04/interpretable-machine-learning-with-iml-and-mlr/
 https://www.r-bloggers.com/2018/08/iml-and-h2o-machine-learning-model-interpretability-and-feature-explanation/
 https://www.r-bloggers.com/2018/02/interpretable-machine-learning-with-iml-and-mlr-2/
+
+
+https://www.pnas.org/content/116/44/22071
+https://towardsdatascience.com/guide-to-interpretable-machine-learning-d40e8a64b6cf
+
+#Papers
+https://arxiv.org/abs/1808.00033
+https://arxiv.org/abs/2010.09337
 
 

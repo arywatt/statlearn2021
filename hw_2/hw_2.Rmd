@@ -1,0 +1,101 @@
+---
+title: "Hw_2"
+author: ""
+date: "5/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 2
+
+### Gradient descent algorithm
+
+```{r}
+# x is an inputs x features matrix
+# y is an inputs x 1 matrix for the labels 
+# alpha: This is the learning rate of the algorithm.
+# epsilon : arrest condition 
+
+GradD <- function(x, y, alpha = 0.006, epsilon = 10^-10){
+  iter <- 0
+  i <- 0
+  x <- cbind(rep(1,nrow(x)), x)
+  theta <- matrix(c(1,1),ncol(x),1)
+  cost <- (1/(2*nrow(x))) * t(x %*% theta - y) %*% (x %*% theta - y)
+  delta <- 1
+  while(delta > epsilon){
+    i <- i + 1
+    theta <- theta - (alpha / nrow(x)) * (t(x) %*% (x %*% theta - y))
+    cval <- (1/(2*nrow(x))) * t(x %*% theta - y) %*% (x %*% theta - y)
+    cost <- append(cost, cval)
+    delta <- abs(cost[i+1] - cost[i])
+    if((cost[i+1] - cost[i]) > 0){
+      print("The cost is increasing.  Try reducing alpha.")
+      return()
+    }
+    iter <- append(iter, i)
+  }
+  print(sprintf("Completed in %i iterations.", i))
+  return(theta)
+}
+
+
+# Function to predict 
+TPredict <- function(theta, x){
+  x <- cbind(rep(1,nrow(x)), x)
+  return(x %*% theta)
+}
+
+```
+
+
+### Load the data 
+```{r }
+
+data = load("amazon_review_clean.RData")
+
+```
+
+### Check data size 
+```{r}
+dim(X_tr)
+dim(X_te)
+length(y_tr)
+length(y_te)
+```
+
+
+### Check and filter features 
+```{r,error=T,warning=FALSE}
+
+ features <- colnames(X_tr)
+ 
+ for (feature in features){
+   # check if feature is non numeric 
+   is_str = is.character(feature)  
+   
+   
+   # check if non numeric 
+   is_non_numeric = is.na(as.numeric(feature))
+   
+   #check if not a punctuation
+   is_not_punctuation = nchar(feature) > 1
+   
+   
+   pass = is_str & is_non_numeric & is_not_punctuation
+   if (!pass) print(feature)
+ }
+```
+
+
+### Training 
+
+```{r}
+  X_tr[1,]
+```
+
+
+

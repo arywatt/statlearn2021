@@ -9,6 +9,83 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Part 1 : Process the dataset
+
+### Load the data 
+```{r }
+data = load("amazon_review_clean.RData")
+```
+
+### Check data size 
+```{r}
+dim(X_tr)
+dim(X_te)
+length(y_tr)
+length(y_te)
+```
+
+
+### Check and filter features 
+#### stop words
+```{r}
+library('cleanNLP')
+library('stopwords')
+#cnlp_download_spacy(model_name = "en")
+
+stop_words = stopwords::stopwords("en")
+#stop_words
+
+```
+
+#### Identify useless features 
+```{r,error=T,warning=FALSE}
+
+ features <- colnames(X_tr)
+ features_to_use = c()
+ 
+ for (feature in features){
+   # check if feature is non numeric 
+   is_str = is.character(feature)  
+   
+   # check if non numeric 
+   is_non_numeric = is.na(as.numeric(feature))
+   
+   #check if not a punctuation
+   is_not_punctuation = nchar(feature) > 1
+   
+   ## check if not a stop-word
+   is_not_stopword = ! feature %in% stop_words
+   
+   # We retain only eature which pass all checks
+   pass = is_str & is_non_numeric & is_not_punctuation & is_not_stopword
+   if (pass) {
+     features_to_use = append(features_to_use, feature)
+   }
+ }
+ 
+ length(features_to_use)
+```
+
+
+### Final data set with  selected features 
+
+```{r}
+#clean_x_tr = X_tr[,features_to_use]
+clean_x_te = X_te[,features_to_use]
+```
+
+```{r}
+#dim(clean_x_tr)
+dim(clean_x_te)
+```
+
+### Build tf-idf matrix 
+
+```{r}
+
+```
+
+
 ## Part 2
 
 ### Gradient descent algorithm
@@ -50,52 +127,4 @@ TPredict <- function(theta, x){
 }
 
 ```
-
-
-### Load the data 
-```{r }
-
-data = load("amazon_review_clean.RData")
-
-```
-
-### Check data size 
-```{r}
-dim(X_tr)
-dim(X_te)
-length(y_tr)
-length(y_te)
-```
-
-
-### Check and filter features 
-```{r,error=T,warning=FALSE}
-
- features <- colnames(X_tr)
- 
- for (feature in features){
-   # check if feature is non numeric 
-   is_str = is.character(feature)  
-   
-   
-   # check if non numeric 
-   is_non_numeric = is.na(as.numeric(feature))
-   
-   #check if not a punctuation
-   is_not_punctuation = nchar(feature) > 1
-   
-   
-   pass = is_str & is_non_numeric & is_not_punctuation
-   if (!pass) print(feature)
- }
-```
-
-
-### Training 
-
-```{r}
-  X_tr[1,]
-```
-
-
 

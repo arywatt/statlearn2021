@@ -93,7 +93,7 @@ dim(tf_te)
 ```{r}
 # For test matrices
 
-# idf_te <- log( nrow(tf_te) / ( 1 + colSums(tf_te != 0) ) ) 
+# idf_te <- log( nrow(tf_te) / ( 1 + colSums(tf_te != 0) ) )
 # idf_te_diag <- diag(idf_te)
 # dim(idf_te_diag)
 
@@ -109,7 +109,7 @@ dim(tf_te)
 #### TF-IDF Matrix normalization
 
 ```{r}
-tf_te = tf_te / sqrt( rowSums( tf_te^2 ) )
+tf_idf = tf_te / sqrt( rowSums( tf_te^2 ) )
 ```
 
 ## Part 2
@@ -122,31 +122,60 @@ tf_te = tf_te / sqrt( rowSums( tf_te^2 ) )
 # alpha: This is the learning rate of the algorithm.
 # epsilon : arrest condition 
 
-GradD <- function(x, y, alpha = 0.006, iters = 1000,epsilon = 10^-10){
+GradD <- function(x, y, size= 1, alpha = 0.006, iters = 1000,epsilon = 0.0001){
   iter <- 0
   i <- 0
-  # x <- cbind(rep(1,nrow(x)), x)
+  x <- cbind(rep(1,nrow(x)), x)
+  N = nrow(x)
   theta <-  as.matrix(rnorm(n=ncol(x), mean=0,sd = 1))
+  
+  # Loss function -  binary entropy loss 
   cost <- function(x,y,theta){
-    y_pred = sigmoid(x %*% theta)
+    if (size > 1) y_pred <- sigmoid(x %*% theta)
+    if (size == 1) y_pred <- sigmoid(t(x) %*% theta)
     return ((-1/nrow(x)) * sum( log(y_pred)*y + (1 - y)*log(1 - y_pred) ))
   }
-  costs = c(cost(x,y,theta))
+  
+  # Theta init 
+  samples = sample(x = 1:N, size = size)
+  x_loop = as.matrix(x[samples,])
+  y_loop = y[samples]
+  costs = c(cost(x_loop,y_loop,theta))
   delta <- 1
+  
+  ## Loop 
   for (i in 2:iters){
-    #i <- i + 1
-    y_pred <- sigmoid(x %*% theta)
-    grad = (t(x) %*% (y_pred - y))
-    theta <- theta - (alpha / nrow(x)) * grad
-    cval <- cost(x,y,theta)
-    #if(i%%10==0) print(paste("iter ",i," : ",cval))
+    samples = sample(x = 1:N, size = size)
+    x_loop = as.matrix(x[samples,])
+    #x_loop = x[samples,]
+    y_loop = y[samples]
+    
+    if (size > 1) y_pred <- sigmoid(x_loop %*% theta)
+    if (size == 1) y_pred <- sigmoid(t(x_loop) %*% theta)
+    
+    
+    # print(length(y_pred))
+    # print(length(y_loop))
+    # print(length(x_loop))
+    # 
+    
+    if (size > 1) grad = (t(x_loop) %*% (y_pred - y_loop))
+    if (size == 1) grad = x_loop %*% (y_pred - y_loop)
+    theta <- theta - (alpha / size) * grad
+    cval <- cost(x_loop,y_loop,theta)
+    
+    if(i%%100==0) print(paste("iter ",i," : ",cval))
+    
     costs <- append(costs, cval)
     delta <- abs(costs[i] - costs[i-1])
-    if((costs[i] - costs[i-1]) > 0){
+    print(delta)
+    if(delta <= epsilon) break
+    if(costs[i] - costs[i-1] > 0){
       print("The cost is increasing.  Try reducing alpha.")
       #return()
     }
     iter <- append(iter, i)
+   
     if(i == iters +1) break
   }
   print(sprintf("Completed in %i iterations.", i))
@@ -195,24 +224,17 @@ TPredict <- function(theta, x){
 
 
 #### Apply GD 
-```{r}
-
-samples = sample(x = 1:49900, size = 5000)
-#samples
-```
 
 ```{r}
 n = 1000
-x = tf_te[samples,]
-y = labels_te[samples]
+# x = tf_idf[samples,]
+# y = labels_te[samples]
+
+x = tf_idf
+y = labels_te
 
 # thet = gradientR(x,y,iters = 1000)
-thet2 = GradD(x,y,iters = 10)
-```
-
-
-```{r}
-thet2
+thet2 = GradD(x,y,size=2,iters = 10,epsilon = 0.001)
 ```
 
 
@@ -220,11 +242,32 @@ thet2
 ```{r}
 #pred1 = sigmoid(x %*% thet$coef)
 pred2 = sigmoid(x %*% thet2)
-pred2
+
+```
+
+
+```{r}
+summary(pred2)
 ```
 
 ```{r}
-nn = rep(1,nrow(x))
-length(nn)
+final_pred = pred2
+summary(final_pred)
+
+
+```
+
+
+```{r}
+final_pred[pred2>=0.5] = "book"
+final_pred[pred2<0.5] = "movie"
+```
+
+```{r}
+table(final_pred)
+```
+
+```{r}
+table(final_pred,y_te)
 ```
 

@@ -41,7 +41,7 @@ labels_tr = as.numeric(factor(y_tr,levels = c('book','movies'),labels = c(0,1)))
 #cnlp_download_spacy(model_name = "en")
 #nlp_proc = cnlp_init_spacy("en")
 stop_words = stopwords("en")
-stop_words
+#stop_words
 
 ```
 
@@ -125,7 +125,7 @@ tf_te = tf_te / sqrt( rowSums( tf_te^2 ) )
 GradD <- function(x, y, alpha = 0.006, iters = 1000,epsilon = 10^-10){
   iter <- 0
   i <- 0
-  x <- cbind(rep(1,nrow(x)), x)
+  # x <- cbind(rep(1,nrow(x)), x)
   theta <-  as.matrix(rnorm(n=ncol(x), mean=0,sd = 1))
   cost <- function(x,y,theta){
     y_pred = sigmoid(x %*% theta)
@@ -195,25 +195,36 @@ TPredict <- function(theta, x){
 
 
 #### Apply GD 
+```{r}
+
+samples = sample(x = 1:49900, size = 5000)
+#samples
+```
 
 ```{r}
 n = 1000
-x = tf_te[1:n,]
-y = labels_te[1:n]
+x = tf_te[samples,]
+y = labels_te[samples]
+
 # thet = gradientR(x,y,iters = 1000)
-thet2 = GradD(x,y,iters = 1000)
+thet2 = GradD(x,y,iters = 10)
+```
+
+
+```{r}
+thet2
 ```
 
 
 
-
-
 ```{r}
-pred1 = sigmoid(x %*% thet$coef)
+#pred1 = sigmoid(x %*% thet$coef)
 pred2 = sigmoid(x %*% thet2)
+pred2
 ```
 
 ```{r}
-
+nn = rep(1,nrow(x))
+length(nn)
 ```
 

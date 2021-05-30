@@ -6,7 +6,11 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(caret)
+library(sigmoid)
+library(sets)
+library(cleanNLP)
+library(tm)
 ```
 
 ## Part 1 : Process the dataset
@@ -24,16 +28,20 @@ length(y_tr)
 length(y_te)
 ```
 
+```{r}
+labels_te = as.numeric(factor(y_te,levels = c('book','movies'),labels = c(0,1)))
+labels_tr = as.numeric(factor(y_tr,levels = c('book','movies'),labels = c(0,1)))
+
+```
 
 ### Check and filter features 
 #### stop words
 ```{r}
-library('cleanNLP')
-library('stopwords')
-#cnlp_download_spacy(model_name = "en")
 
-stop_words = stopwords::stopwords("en")
-#stop_words
+#cnlp_download_spacy(model_name = "en")
+#nlp_proc = cnlp_init_spacy("en")
+stop_words = stopwords("en")
+stop_words
 
 ```
 
@@ -70,21 +78,39 @@ stop_words = stopwords::stopwords("en")
 ### Final data set with  selected features 
 
 ```{r}
-#clean_x_tr = X_tr[,features_to_use]
-clean_x_te = X_te[,features_to_use]
+#tf_tr = X_tr[,features_to_use]
+tf_te = X_te[,features_to_use]
 ```
 
 ```{r}
 #dim(clean_x_tr)
-dim(clean_x_te)
+dim(tf_te)
 ```
 
 ### Build tf-idf matrix 
 
+#### IDF matrices
 ```{r}
+# For test matrices
+
+idf_te <- log( nrow(tf_te) / ( 1 + colSums(tf_te != 0) ) ) 
+idf_te_diag <- diag(idf_te)
+dim(idf_te_diag)
 
 ```
 
+#### TF-IDF matrices
+
+```{r}
+tf_idf <- tf_te %*% idf_te_diag
+colnames(tf_idf) <- colnames(tf_te)
+dim(tf_idf)
+```
+#### TF-IDF Matrix normalization
+
+```{r}
+tf_idf = tf_idf / sqrt( rowSums( tf_idf^2 ) )
+```
 
 ## Part 2
 
@@ -96,26 +122,35 @@ dim(clean_x_te)
 # alpha: This is the learning rate of the algorithm.
 # epsilon : arrest condition 
 
-GradD <- function(x, y, alpha = 0.006, epsilon = 10^-10){
+GradD <- function(x, y, alpha = 0.006, iters = 1000,epsilon = 10^-10){
   iter <- 0
   i <- 0
   x <- cbind(rep(1,nrow(x)), x)
-  theta <- matrix(c(1,1),ncol(x),1)
-  cost <- (1/(2*nrow(x))) * t(x %*% theta - y) %*% (x %*% theta - y)
+  theta <-  as.matrix(rnorm(n=ncol(x), mean=0,sd = 1))
+  cost <- function(x,y,theta){
+    y_pred = sigmoid(x %*% theta)
+    return ((-1/nrow(x)) * sum( log(y_pred)*y + (1 - y)*log(1 - y_pred) ))
+  }
+  costs = c(cost(x,y,theta))
   delta <- 1
-  while(delta > epsilon){
-    i <- i + 1
-    theta <- theta - (alpha / nrow(x)) * (t(x) %*% (x %*% theta - y))
-    cval <- (1/(2*nrow(x))) * t(x %*% theta - y) %*% (x %*% theta - y)
-    cost <- append(cost, cval)
-    delta <- abs(cost[i+1] - cost[i])
-    if((cost[i+1] - cost[i]) > 0){
+  for (i in 2:iters){
+    #i <- i + 1
+    y_pred <- sigmoid(x %*% theta)
+    grad = (t(x) %*% (y_pred - y))
+    theta <- theta - (alpha / nrow(x)) * grad
+    cval <- cost(x,y,theta)
+    #if(i%%10==0) print(paste("iter ",i," : ",cval))
+    costs <- append(costs, cval)
+    delta <- abs(costs[i] - costs[i-1])
+    if((costs[i] - costs[i-1]) > 0){
       print("The cost is increasing.  Try reducing alpha.")
-      return()
+      #return()
     }
     iter <- append(iter, i)
+    if(i == iters +1) break
   }
   print(sprintf("Completed in %i iterations.", i))
+  print(paste("Final gradient norm is",sqrt(sum(grad^2))))
   return(theta)
 }
 
@@ -126,5 +161,71 @@ TPredict <- function(theta, x){
   return(x %*% theta)
 }
 
+
+```
+
+
+```{r}
+gradientR<-function(X,y, epsilon=0.0001,eta=0.001, iters=100){
+      
+      X = as.matrix(data.frame(rep(1,length(y)),X))
+      N= nrow(X)
+      print("Initialize parameters...")
+      theta.init = as.matrix(rnorm(n=ncol(X), mean=0,sd = 1)) # Initialize theta
+      theta.init = t(theta.init)
+       e = t(y) - theta.init%*%t(X)
+       grad.init = -(2/N)%*%(e)%*%X
+       theta = theta.init - eta*(1/N)*grad.init
+       l2loss = c()
+      for(i in 1:iters){
+          l2loss = c(l2loss,sqrt(sum((t(y) - theta%*%t(X))^2)))
+          e = t(y) - theta%*%t(X)
+          grad = -(2/N)%*%e%*%X
+          theta = theta - eta*(2/N)*grad
+            if(sqrt(sum(grad^2)) <= epsilon){
+              break
+            }
+        }
+  print("Algorithm converged")
+  print(paste("Final gradient norm is",sqrt(sum(grad^2))))
+  values<-list("coef" = t(theta), "l2loss" = l2loss)
+  return(values)
+}
+```
+
+
+```{r}
+x = c( 0.7)
+sigmoid(x)
+```
+
+#### Apply GD 
+
+```{r}
+# n = 1000
+# x = tf_idf[1:n,]
+# y = labels_te[1:n]
+# thet = gradientR(x,y,iters = 1000)
+thet2 = GradD(x,y,iters = 5000)
+```
+
+
+```{r}
+h = c(1,0,0,4)
+(h==0)*c(1,2,3,4)
+```
+
+
+```{r}
+pred1 = sigmoid(x %*% thet$coef)
+pred2 = sigmoid(x %*% thet2)
+```
+
+```{r}
+dim(thet2)
+dim(x)
+```
+```{r}
+thet2
 ```
 

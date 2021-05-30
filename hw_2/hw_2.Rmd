@@ -93,23 +93,23 @@ dim(tf_te)
 ```{r}
 # For test matrices
 
-idf_te <- log( nrow(tf_te) / ( 1 + colSums(tf_te != 0) ) ) 
-idf_te_diag <- diag(idf_te)
-dim(idf_te_diag)
+# idf_te <- log( nrow(tf_te) / ( 1 + colSums(tf_te != 0) ) ) 
+# idf_te_diag <- diag(idf_te)
+# dim(idf_te_diag)
 
 ```
 
 #### TF-IDF matrices
 
 ```{r}
-tf_idf <- tf_te %*% idf_te_diag
-colnames(tf_idf) <- colnames(tf_te)
-dim(tf_idf)
+# tf_idf <- tf_te %*% idf_te_diag
+# colnames(tf_idf) <- colnames(tf_te)
+# dim(tf_idf)
 ```
 #### TF-IDF Matrix normalization
 
 ```{r}
-tf_idf = tf_idf / sqrt( rowSums( tf_idf^2 ) )
+tf_te = tf_te / sqrt( rowSums( tf_te^2 ) )
 ```
 
 ## Part 2
@@ -166,54 +166,46 @@ TPredict <- function(theta, x){
 
 
 ```{r}
-gradientR<-function(X,y, epsilon=0.0001,eta=0.001, iters=100){
-      
-      X = as.matrix(data.frame(rep(1,length(y)),X))
-      N= nrow(X)
-      print("Initialize parameters...")
-      theta.init = as.matrix(rnorm(n=ncol(X), mean=0,sd = 1)) # Initialize theta
-      theta.init = t(theta.init)
-       e = t(y) - theta.init%*%t(X)
-       grad.init = -(2/N)%*%(e)%*%X
-       theta = theta.init - eta*(1/N)*grad.init
-       l2loss = c()
-      for(i in 1:iters){
-          l2loss = c(l2loss,sqrt(sum((t(y) - theta%*%t(X))^2)))
-          e = t(y) - theta%*%t(X)
-          grad = -(2/N)%*%e%*%X
-          theta = theta - eta*(2/N)*grad
-            if(sqrt(sum(grad^2)) <= epsilon){
-              break
-            }
-        }
-  print("Algorithm converged")
-  print(paste("Final gradient norm is",sqrt(sum(grad^2))))
-  values<-list("coef" = t(theta), "l2loss" = l2loss)
-  return(values)
-}
+# gradientR<-function(X,y, epsilon=0.0001,eta=0.001, iters=100){
+#       
+#       X = as.matrix(data.frame(rep(1,length(y)),X))
+#       N= nrow(X)
+#       print("Initialize parameters...")
+#       theta.init = as.matrix(rnorm(n=ncol(X), mean=0,sd = 1)) # Initialize theta
+#       theta.init = t(theta.init)
+#        e = t(y) - theta.init%*%t(X)
+#        grad.init = -(2/N)%*%(e)%*%X
+#        theta = theta.init - eta*(1/N)*grad.init
+#        l2loss = c()
+#       for(i in 1:iters){
+#           l2loss = c(l2loss,sqrt(sum((t(y) - theta%*%t(X))^2)))
+#           e = t(y) - theta%*%t(X)
+#           grad = -(2/N)%*%e%*%X
+#           theta = theta - eta*(2/N)*grad
+#             if(sqrt(sum(grad^2)) <= epsilon){
+#               break
+#             }
+#         }
+#   print("Algorithm converged")
+#   print(paste("Final gradient norm is",sqrt(sum(grad^2))))
+#   values<-list("coef" = t(theta), "l2loss" = l2loss)
+#   return(values)
+# }
 ```
 
-
-```{r}
-x = c( 0.7)
-sigmoid(x)
-```
 
 #### Apply GD 
 
 ```{r}
-# n = 1000
-# x = tf_idf[1:n,]
-# y = labels_te[1:n]
+n = 1000
+x = tf_te[1:n,]
+y = labels_te[1:n]
 # thet = gradientR(x,y,iters = 1000)
-thet2 = GradD(x,y,iters = 5000)
+thet2 = GradD(x,y,iters = 1000)
 ```
 
 
-```{r}
-h = c(1,0,0,4)
-(h==0)*c(1,2,3,4)
-```
+
 
 
 ```{r}
@@ -222,10 +214,6 @@ pred2 = sigmoid(x %*% thet2)
 ```
 
 ```{r}
-dim(thet2)
-dim(x)
-```
-```{r}
-thet2
+
 ```
 

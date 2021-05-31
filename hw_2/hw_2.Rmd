@@ -188,8 +188,8 @@ GradD <- function(x, y, size= 1, alpha = 0.006, iters = 1000,epsilon = 0.0001){
   #y_te=ifelse(y_te=="book",1,0)
 TPredict <- function(theta, x){
   x <- cbind(rep(1,nrow(x)), x)
-  y_pred=x %*% theta
-  y_pred=ifelse(y_pred>0,1,0)
+  y_pred=sigmoid(x %*% theta)
+  y_pred=ifelse(y_pred>0.5,1,0)
   return(table(y_pred,y_te))
   }
 

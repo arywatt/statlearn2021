@@ -1,0 +1,293 @@
+---
+title: "Statlearn HW_1"
+author: "Alessandro Maglie; Chiara Caminiti; Gabriella Jellyman; ; Frank Massoda ; Yao Wateba Appeti"
+date: "30/05/2021"
+output:
+  html_document: default
+  pdf_document: default
+header-includes: \usepackage { amsmath }
+---
+
+```{r}
+# Here we include all libraires needed to run 
+library(ggplot2)
+library(e1071)
+library(arm)
+library(sigmoid)
+library(cleanNLP)
+```
+
+## Ex.1
+
+### Define the Bayes classifier/strategy and briefly explain its role/importance in classification/prediction.
+
+Bayes classifiers are a collection of classification algorithms based on **Bayes' theorem**. It is not a single algorithm, but a family of algorithms where all of them share a common principle, that is *every pair of features being classified is independent of each other and contibutes equally to the outcome of the dependent variable*. Even though these assumptions do not generally hold in real examples, they work well in practice.  
+
+The Bayes classifier finds the corresponding labelling class for every pair of fatures by using the maximum a posteriori, **it achieves the lowest possible error(like an irreducible variance)** among all type of classifiers (this is true if all the terms involving Bayes' theorem are corectly specified). Hence its importance comes from the fact that all types of classifiers try to perform **at least as well as the Bayes classifier: it's the optimal classifier**.
+
+**Let Y represent the dependent variable and X the independent variable, the rule of the Bayes classifier is defined as follows using Bayes' theorem
+$$ p(Y=c|X)= \frac{p(X|Y=c)p(Y=c)}{p(X)}$$
+Assuming binary classification setting with two predictors, we can then define the previous equation as follows:
+$$p(Y=1|X_1, X_2)= \frac{p(X_1,X_2|Y=1)p(Y=1)}{p(X_1,X_2|Y=0)p(Y=0)+p(X_1,X_2|Y=1)p(Y=1)}$$
+Since Bayes classifier assumes independency for the predictors and the denominator is just a normalizing constant, we can then write:
+$$p(Y=1|X_1, X_2) \propto p(X_1|Y=1)p(X_2|Y=1)p(Y=1)$$
+Writing the same in the case of $Y=0$, we can then write:
+$$ \underset{y} \argmax p(y|X_1, X_2) \propto \prod_{i=1}^2 p(X_i|y)p(y) $$
+
+where $p(y)$ is the a priori probability associated with a given class, and $p(X_i|y)$ is the likelihood of a predictor coming from a certain class. By using Bayes theorem, the Bayes classifier assigns a a given pair of featues to the class that maximized the a posteriori probability. Given a data set, we need to assume a distribution for the likelihood and compute the a priori probabilities; the Bayes classifier is a *generative approach*.
+
+
+###Find (with pen and paper) the Bayes classification rule hopt(x)
+The Bayes classification rule is defined as follows:
+$$ h_{opt}(x)=\mathbb{I}(\frac{p_1(x)}{p_0(x)}>\frac{\pi_0}{\pi_1}) $$
+In our case the prior probabilities are $\pi_0=\pi_1=\frac{1}{2}$, while $p_0(x)\sim Unif(-3,1) $ and $p_1(x)\sim Unif(-1,3)$. Equivalently,$p_0(x) = \frac{1}{4} \mathbb{I}_{(-3,1)}(x) $ and $p_1(x) = \frac{1}{4} \mathbb{I}_{(-1,3)}(x) $. 
+Hence, by substituting these values into the definition of hopt we obtain:
+$$ \begin{align}
+h_{opt}(x) = & \mathbb{I} (p_1(x) \pi_1> p_0(x) \pi_0) \\
+           =  & \mathbb{I} (\frac{1}{2} \frac{1}{4} \mathbb{I}_{(-1,3)}(x) > \frac{1}{2} \frac{1}{4} \mathbb{I}_{(-3,1)}(x))\\
+           = & \mathbb{I}_{(1,3)}(x)
+ \end{align}$$
+
+We justify the second to last passage by observing that the inequality between indicator functions is valid if and only if the left hand side is strictly greater than the right hand side. This happens when the indicator function between -1 and 3 is  equal to 1 *and* the indicator function between -3 and 1 is  equal to 0. The intersection of this events occurs in the interval $(1,3)$. Therefore our Bayes decision rule is the indicator function between one and three.
+$$h_{opt}(x) = \mathbb{I}_{(1,3)}(x) $$
+
+
+### Simulate n = 250 data from the joint data model p(y, x) = p(x | y) · p(y)
+```{r}
+set.seed(20)
+
+joint=function(n){
+  y=matrix(NA, n, 1)
+  x_cond_y=matrix(NA, n, 1)
+  for (i in 1:n) {
+    y[i]=rbinom(1,1,0.5) #the marginal distribution of Y is Bernoulli with success probability 0.5
+    x_cond_y[i]=ifelse(y[i]==0, runif(1, min = -3, max=1), runif(1, min = -1, max=3))
+    #this command generates the conditional probability of X given Y, if the observed value of Y is 0, then the conditional distribution of X is uniform between -3 and 1, otherwise the conditional distribution of X is uniform between -1 and 3
+  }
+  joint=cbind(y, x_cond_y)
+  return(joint)
+  
+  }
+  
+sample=joint(250) #our sample of 250 observations of (Y,X)
+
+
+head(sample)#just to verify that the function works correctly
+```
+
+
+### Plot the data together with the regression function that defines hopt(x)
+```{r}
+ind_1_3=function(x){
+  value=ifelse(x>1 & x<3, 1, 0) #indicator function between 1 and 3
+  return(value)
+}
+
+library(ggplot2)
+s=data.frame(sample)
+ggplot(s, aes(X2,X1))+ geom_jitter(height = 0.18,aes(color = factor(X1)))+theme(panel.background = element_rect( fill = "#FAFAFA"))+ scale_y_continuous(breaks =c(0,1), labels = c("0","1"))+ theme(legend.position = "none")+ scale_color_manual(values = c("#FD6467", "#00A08A"))+stat_function(fun=ind_1_3, col="purple", size=1)+xlab("X|Y")+ylab("Y")+labs(title= "Simulated distribution of (X,Y) n=250")+theme(plot.title = element_text(color="#330099", size=15, face="bold"))
+```
+
+
+
+### Evaluate the performance of the Bayes Classifiers on these simple (only 1 feature!) data
+```{r}
+#we have computed the naive bayes classifier as the indicator fnc of x between 1 and 3
+h_opt=function(x) {
+  y_bay=matrix(NA, length(x), 1) #empty vector to store the classification
+  
+  for (i in 1:length(y_bay)) {
+   y_bay[i]=ind_1_3(x[i])#if the i-th x is between 1 and 3 then the bayes classifier assigns to the yi-th y value 1, 0 otherwise
+  }
+  joint_bay=cbind(y_bay,x)  #returns the joint with the bayesian classification for y
+  return(joint_bay)
+}
+
+
+bayes_est=h_opt(sample[,2]) #we are applying the bayes classifier to the generated x values
+
+head(bayes_est)
+
+eval=function(y_bay){
+  errors=matrix(NA, length(y_bay), 1) #empty vector to store any misclassification
+  errors=abs(y_bay-sample[,1])
+    return(sum(errors)/length(errors)) #returns the misclassification rate
+}
+
+eval(bayes_est[,1]) #our bayesian estimator is wrong 24% of the times
+
+```
+
+
+#### Comparison with the r version of naive Bayes classifier
+```{r}
+library(e1071)
+naive.r=naiveBayes(X1 ~ ., data = s, type = "raw")
+
+pred.r = predict(naive.r, s)
+
+mean(pred.r !=  s$X1)*100  #they produce the same results
+
+library(caret)
+confusionMatrix(pred.r, as.factor(s$X1)) 
+```
+The "hand-made" Bayes classifier and the r-based one yeald the same result, as expected. The r-Bayes classifier is wrong 24% of the times too.
+
+
+### Apply any other classifier of your choice to these data and comparatively comment its performance. 
+We have chosen to compare the Bayes classifier to the logistic one. The main difference between the classifiers resides in their nature: the Bayes one is generative, while the logistic is discriminative. In fact the logistic classifier optimizes the conditional distribution of Y given the features.
+```{r}
+library(arm)
+
+fit.1 <- glm (sample[,1] ~ sample[,2], family=binomial(link="logit"))
+log_y = ifelse(predict(fit.1) > 0.5, 1, 0) #this is the logistic classification for Y
+
+eval(log_y) #the logistic classifier is wrong 24% of the time 
+```
+The logistic classifier exhibits the same error rate as the Bayes one.
+
+
+### Repeat the sampling M = 1000 times keeping n = 250 fixed (a simple for-loop will do it), and redo the comparison
+#### Bayes repetition
+```{r}
+mtx <- array(NA, c(250, 2, 1000)) #we create a 1000 empty 250x2 matrices
+M=1000 
+for (i in 1:M) {
+  ith_joint=joint(250) #we simulate the ith sample
+  mtx[,1,i]=ith_joint[,1] #we fill rows and columns of each of the 1000 matrices
+  mtx[,2,i]=ith_joint[,2]
+}
+
+
+##1000 bayes classifiers
+bayes_rep=matrix(NA, 250, 1000) #each of the 1000 columns contains the classifier for the ith sample (contains 1000 Y vectors) 
+
+for (i in 1:M) {
+  bayes_rep[,i]=h_opt(mtx[,2,i])[,1] 
+} #we apply the bayes classifier to the 1000 simulated Ys, stored in "bayes_rep"  
+
+bayes_error=matrix(NA, 1000, 1) #each row is going to contain the error rate computed at one of the 1000 simulations 
+
+for (i in 1:M) {
+  bayes_error[i]=eval(bayes_rep[,i])  
+}
+
+mean(bayes_error)
+```
+By simulating a 1000 (Y,X) vectors, we observe that on average the Bayes classifier misclassifies observations around 50.8% of the times.
+
+#### Logistic repetition
+```{r}
+###1000 logistic classifiers
+M=1000
+logit_rep=matrix(NA, 250, 1000)
+
+errors_logit=matrix(NA,1,1000) #empty, contains the error rates for each of the 1000 simulatios
+
+
+
+for (j in 1:M) {
+  fit.j <- glm (mtx[,1,j] ~ mtx[,2,j], family=binomial(link="logit")) ##fitting the logistic model on the j-th sampled data
+  log_yj = ifelse(predict(fit.j) > 0.5, 1, 0) #this is the logistic classification for Yj
+  logit_rep[,j]=log_yj
+  errors_logit[j]=eval(log_yj)
+  
+}
+
+mean(errors_logit) #error rate of the logistic regression
+```
+By simulating a 1000 (Y,X) vectors, we observe that on average the logistic classifier misclassifies observations around 50.3% of the times, which is approximately the same result obtained by evaluating the Bayes classifier. 
+
+
+## Ex.2
+
+### Looking at the formula at the bottom of page 8 of our notes, train a linear classifier by gradient descent (GD). Check its performance and then comment the results.
+
+
+```{r}
+
+load("~/Desktop/HW2/amazon_review_clean.RData")
+
+#Gradient descent implementation finds the best theta under binary entropy loss
+GradD <- function(x, y, size= 1, alpha = 0.001, iters = 1000,epsilon = 0.000000001){
+  iter <- 0
+  i <- 0
+  x <- cbind(rep(1,nrow(x)), x)
+  N = nrow(x)
+  theta <-  as.matrix(rep(0,ncol(x)))
+  
+  # Loss function -  binary entropy loss 
+  cost <- function(x,y,theta){
+    if (size > 1) y_pred <- sigmoid(x %*% theta)
+    if (size == 1) y_pred <- sigmoid(t(x) %*% theta)
+    return ((-1/nrow(x)) * sum( log(y_pred)*y + (1 - y)*log(1 - y_pred) ))
+  }
+  
+  
+  
+  # Theta init 
+  samples = sample(x = 1:N, size = size)
+  x_loop = as.matrix(x[samples,])
+  y_loop = y[samples]
+  costs = c(cost(x_loop,y_loop,theta))
+  delta <- 1
+  
+  ## Loop 
+  for (i in 2:iters){
+    samples = sample(x = 1:N, size = size)
+    x_loop = as.matrix(x[samples,])
+    #x_loop = x[samples,]
+    y_loop = y[samples]
+    
+    if (size > 1) y_pred <- sigmoid(x_loop %*% theta)
+    if (size == 1) y_pred <- sigmoid(t(x_loop) %*% theta)
+    
+    
+    # print(length(y_pred))
+    # print(length(y_loop))
+    # print(length(x_loop))
+    # 
+    
+    if (size > 1) grad = (t(x_loop) %*% (y_pred - y_loop))
+    if (size == 1) grad = x_loop %*% (y_pred - y_loop)
+    theta <- theta - (alpha / size) * grad
+    cval <- cost(x_loop,y_loop,theta)
+    
+    if(i%%100==0) print(paste("iter ",i," : ",cval))
+    
+    costs <- append(costs, cval)
+    delta <- abs(costs[i] - costs[i-1])
+    print(delta)
+    if(delta <= epsilon) break
+    if(costs[i] - costs[i-1] > 0){
+      print("The cost is increasing.  Try reducing alpha.")
+      #return()
+    }
+    iter <- append(iter, i)
+    
+    if(i == iters +1) break
+  }
+  
+  print(sprintf("Completed in %i iterations.", i))
+  print(paste("Final gradient norm is",sqrt(sum(grad^2))))
+  return(theta)
+}
+
+
+```
+
+```{r}
+# Function to predict the recoded labels of test set using theta supplied by GradD function (with specific parameters)
+#Output is the confusion matrix that tells us how "good" are the predicted labels 
+  
+y_te=ifelse(y_te=="book",1,0)
+
+TPredict <- function(theta, x){
+  x <- cbind(rep(1,nrow(x)), x)
+  y_pred=x %*% theta
+  y_pred=ifelse(y_pred>0,1,0)
+  return(table(y_pred,y_te))
+  }
+```
+
+To perform SGD we can use the same function GradD putting size=1 

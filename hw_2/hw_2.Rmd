@@ -127,7 +127,7 @@ GradD <- function(x, y, size= 1, alpha = 0.006, iters = 1000,epsilon = 0.0001){
   i <- 0
   x <- cbind(rep(1,nrow(x)), x)
   N = nrow(x)
-  theta <-  as.matrix(rnorm(n=ncol(x), mean=0,sd = 1))
+  theta <-  as.matrix(rep(0,ncol(x))
   
   # Loss function -  binary entropy loss 
   cost <- function(x,y,theta){
@@ -185,10 +185,13 @@ GradD <- function(x, y, size= 1, alpha = 0.006, iters = 1000,epsilon = 0.0001){
 
 
 # Function to predict 
+  #y_te=ifelse(y_te=="book",1,0)
 TPredict <- function(theta, x){
   x <- cbind(rep(1,nrow(x)), x)
-  return(x %*% theta)
-}
+  y_pred=x %*% theta
+  y_pred=ifelse(y_pred>0,1,0)
+  return(table(y_pred,y_te))
+  }
 
 
 ```
